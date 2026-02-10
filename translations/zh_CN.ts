@@ -449,6 +449,102 @@
         <source>Reality short id. Accept only one value.</source>
         <translation>Reality short id. 只接受一个值。</translation>
     </message>
+    <message>
+        <source>TLS Advanced Settings</source>
+        <translation>TLS 高级设置</translation>
+    </message>
+    <message>
+        <source>Enable Encrypted Client Hello (ECH) for enhanced privacy</source>
+        <translation>启用加密客户端问候 (ECH) 以增强隐私保护</translation>
+    </message>
+    <message>
+        <source>Enable ECH</source>
+        <translation>启用 ECH</translation>
+    </message>
+    <message>
+        <source>Static ECH configuration (base64 encoded)</source>
+        <translation>静态 ECH 配置 (base64 编码)</translation>
+    </message>
+    <message>
+        <source>ECH Config</source>
+        <translation>ECH 配置</translation>
+    </message>
+    <message>
+        <source>Path to ECH configuration file</source>
+        <translation>ECH 配置文件路径</translation>
+    </message>
+    <message>
+        <source>ECH Config Path</source>
+        <translation>ECH 配置路径</translation>
+    </message>
+    <message>
+        <source>Server name for dynamic ECH query (leave empty to use SNI)</source>
+        <translation>动态 ECH 查询的服务器名称 (留空则使用 SNI)</translation>
+    </message>
+    <message>
+        <source>ECH Query Server</source>
+        <translation>ECH 查询服务器</translation>
+    </message>
+    <message>
+        <source>DNS resolver for initial ECH query (default: dns-direct)</source>
+        <translation>初始 ECH 查询的 DNS 解析器 (默认: dns-direct)</translation>
+    </message>
+    <message>
+        <source>ECH Bootstrap DNS</source>
+        <translation>ECH 引导 DNS</translation>
+    </message>
+    <message>
+        <source>DNS resolver for ECH TTL refresh (default: dns-remote)</source>
+        <translation>ECH TTL 刷新的 DNS 解析器 (默认: dns-remote)</translation>
+    </message>
+    <message>
+        <source>ECH Tunnel DNS</source>
+        <translation>ECH 隧道 DNS</translation>
+    </message>
+    <message>
+        <source>Disable SNI in TLS handshake</source>
+        <translation>在 TLS 握手中禁用 SNI</translation>
+    </message>
+    <message>
+        <source>Disable SNI</source>
+        <translation>禁用 SNI</translation>
+    </message>
+    <message>
+        <source>Minimum TLS version</source>
+        <translation>最低 TLS 版本</translation>
+    </message>
+    <message>
+        <source>TLS Min Version</source>
+        <translation>TLS 最低版本</translation>
+    </message>
+    <message>
+        <source>Maximum TLS version</source>
+        <translation>最高 TLS 版本</translation>
+    </message>
+    <message>
+        <source>TLS Max Version</source>
+        <translation>TLS 最高版本</translation>
+    </message>
+    <message>
+        <source>Dialer Options</source>
+        <translation>拨号选项</translation>
+    </message>
+    <message>
+        <source>Enable TCP Fast Open to reduce latency</source>
+        <translation>启用 TCP Fast Open 以降低延迟</translation>
+    </message>
+    <message>
+        <source>TCP Fast Open</source>
+        <translation>TCP 快速打开</translation>
+    </message>
+    <message>
+        <source>Enable UDP fragmentation for compatibility</source>
+        <translation>启用 UDP 分片以提升兼容性</translation>
+    </message>
+    <message>
+        <source>UDP Fragment</source>
+        <translation>UDP 分片</translation>
+    </message>
 </context>
 <context>
     <name>DialogHotkey</name>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fmt/AbstractBean.hpp"
+#include "fmt/V2RayStreamSettings.hpp"
 
 namespace NekoGui_fmt {
     class QUICBean : public AbstractBean {
@@ -39,13 +40,16 @@ namespace NekoGui_fmt {
 
         QString password = "";
 
-        // TLS
+        // TLS (legacy fields for backward compatibility)
 
         bool allowInsecure = false;
         QString sni = "";
         QString alpn = "";
         QString caText = "";
         bool disableSni = false;
+
+        // Stream settings (includes TLS configuration)
+        std::shared_ptr<V2rayStreamSettings> stream = std::make_shared<V2rayStreamSettings>();
 
         explicit QUICBean(int _proxy_type) : AbstractBean(0) {
             proxy_type = _proxy_type;
@@ -69,12 +73,14 @@ namespace NekoGui_fmt {
                 _add(new configItem("uos", &uos, itemType::boolean));
             }
             _add(new configItem("forceExternal", &forceExternal, itemType::boolean));
-            // TLS
+            // TLS (legacy)
             _add(new configItem("allowInsecure", &allowInsecure, itemType::boolean));
             _add(new configItem("sni", &sni, itemType::string));
             _add(new configItem("alpn", &alpn, itemType::string));
             _add(new configItem("caText", &caText, itemType::string));
             _add(new configItem("disableSni", &disableSni, itemType::boolean));
+            // Stream settings
+            _add(new configItem("stream", dynamic_cast<JsonStore *>(stream.get()), itemType::jsonStore));
         };
 
         QString DisplayAddress() override {

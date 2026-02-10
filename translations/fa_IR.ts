@@ -451,6 +451,102 @@
         <source>Reality short id. Accept only one value.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>TLS Advanced Settings</source>
+        <translation>تنظیمات پیشرفته TLS</translation>
+    </message>
+    <message>
+        <source>Enable Encrypted Client Hello (ECH) for enhanced privacy</source>
+        <translation>فعال کردن Encrypted Client Hello (ECH) برای حریم خصوصی بیشتر</translation>
+    </message>
+    <message>
+        <source>Enable ECH</source>
+        <translation>فعال کردن ECH</translation>
+    </message>
+    <message>
+        <source>Static ECH configuration (base64 encoded)</source>
+        <translation>پیکربندی استاتیک ECH (رمزگذاری base64)</translation>
+    </message>
+    <message>
+        <source>ECH Config</source>
+        <translation>پیکربندی ECH</translation>
+    </message>
+    <message>
+        <source>Path to ECH configuration file</source>
+        <translation>مسیر فایل پیکربندی ECH</translation>
+    </message>
+    <message>
+        <source>ECH Config Path</source>
+        <translation>مسیر پیکربندی ECH</translation>
+    </message>
+    <message>
+        <source>Server name for dynamic ECH query (leave empty to use SNI)</source>
+        <translation>نام سرور برای پرس و جوی پویای ECH (خالی بگذارید تا از SNI استفاده شود)</translation>
+    </message>
+    <message>
+        <source>ECH Query Server</source>
+        <translation>سرور پرس و جوی ECH</translation>
+    </message>
+    <message>
+        <source>DNS resolver for initial ECH query (default: dns-direct)</source>
+        <translation>حل‌کننده DNS برای پرس و جوی اولیه ECH (پیش‌فرض: dns-direct)</translation>
+    </message>
+    <message>
+        <source>ECH Bootstrap DNS</source>
+        <translation>DNS راه‌اندازی اولیه ECH</translation>
+    </message>
+    <message>
+        <source>DNS resolver for ECH TTL refresh (default: dns-remote)</source>
+        <translation>حل‌کننده DNS برای به‌روزرسانی TTL ECH (پیش‌فرض: dns-remote)</translation>
+    </message>
+    <message>
+        <source>ECH Tunnel DNS</source>
+        <translation>DNS تونل ECH</translation>
+    </message>
+    <message>
+        <source>Disable SNI in TLS handshake</source>
+        <translation>غیرفعال کردن SNI در دست دادن TLS</translation>
+    </message>
+    <message>
+        <source>Disable SNI</source>
+        <translation>غیرفعال کردن SNI</translation>
+    </message>
+    <message>
+        <source>Minimum TLS version</source>
+        <translation>حداقل نسخه TLS</translation>
+    </message>
+    <message>
+        <source>TLS Min Version</source>
+        <translation>نسخه حداقل TLS</translation>
+    </message>
+    <message>
+        <source>Maximum TLS version</source>
+        <translation>حداکثر نسخه TLS</translation>
+    </message>
+    <message>
+        <source>TLS Max Version</source>
+        <translation>نسخه حداکثر TLS</translation>
+    </message>
+    <message>
+        <source>Dialer Options</source>
+        <translation>گزینه‌های شماره‌گیری</translation>
+    </message>
+    <message>
+        <source>Enable TCP Fast Open to reduce latency</source>
+        <translation>فعال کردن TCP Fast Open برای کاهش تاخیر</translation>
+    </message>
+    <message>
+        <source>TCP Fast Open</source>
+        <translation>TCP Fast Open</translation>
+    </message>
+    <message>
+        <source>Enable UDP fragmentation for compatibility</source>
+        <translation>فعال کردن تکه‌تکه شدن UDP برای سازگاری</translation>
+    </message>
+    <message>
+        <source>UDP Fragment</source>
+        <translation>تکه‌تکه شدن UDP</translation>
+    </message>
 </context>
 <context>
     <name>DialogHotkey</name>

@@ -70,8 +70,46 @@ namespace NekoGui_fmt {
                     {"fingerprint", fp},
                 };
             }
+            // ECH support
+            if (ech_enabled) {
+                QJsonObject ech{{"enabled", true}};
+                
+                // Static config: config or config_path
+                if (!ech_config.trimmed().isEmpty()) {
+                    ech["config"] = QList2QJsonArray(QStringList{ech_config.trimmed()});
+                } else if (!ech_config_path.trimmed().isEmpty()) {
+                    ech["config_path"] = ech_config_path.trimmed();
+                } else {
+                    // Dynamic DNS query mode
+                    if (!ech_query_server_name.trimmed().isEmpty()) {
+                        ech["query_server_name"] = ech_query_server_name.trimmed();
+                    }
+                    // Bootstrap resolver (first query, direct connection)
+                    if (!ech_bootstrap_resolver.trimmed().isEmpty() && ech_bootstrap_resolver != "dns-direct") {
+                        ech["bootstrap_resolver"] = ech_bootstrap_resolver;
+                    } else {
+                        ech["bootstrap_resolver"] = "dns-direct";
+                    }
+                    // Tunnel resolver (TTL refresh, through proxy)
+                    if (!ech_tunnel_resolver.trimmed().isEmpty() && ech_tunnel_resolver != "dns-remote") {
+                        ech["tunnel_resolver"] = ech_tunnel_resolver;
+                    } else {
+                        ech["tunnel_resolver"] = "dns-remote";
+                    }
+                }
+                
+                tls["ech"] = ech;
+            }
+            // TLS advanced options
+            if (disable_sni) tls["disable_sni"] = true;
+            if (!tls_min_version.trimmed().isEmpty()) tls["min_version"] = tls_min_version.trimmed();
+            if (!tls_max_version.trimmed().isEmpty()) tls["max_version"] = tls_max_version.trimmed();
             outbound->insert("tls", tls);
         }
+
+        // Dialer options
+        if (tcp_fast_open) outbound->insert("tcp_fast_open", true);
+        if (udp_fragment) outbound->insert("udp_fragment", true);
 
         if (outbound->value("type").toString() == "vmess" || outbound->value("type").toString() == "vless") {
             outbound->insert("packet_encoding", packet_encoding);
@@ -175,20 +213,19 @@ namespace NekoGui_fmt {
     CoreObjOutboundBuildResult QUICBean::BuildCoreObjSingBox() {
         CoreObjOutboundBuildResult result;
 
-        QJsonObject coreTlsObj{
-            {"enabled", true},
-            {"disable_sni", disableSni},
-            {"insecure", allowInsecure},
-            {"certificate", caText.trimmed()},
-            {"server_name", sni},
-        };
-        if (!alpn.trimmed().isEmpty()) coreTlsObj["alpn"] = QList2QJsonArray(alpn.split(","));
-        if (proxy_type == proxy_Hysteria2) coreTlsObj["alpn"] = "h3";
+        // Migrate legacy TLS fields to stream settings (backward compatibility)
+        if (!sni.isEmpty() && stream->sni.isEmpty()) stream->sni = sni;
+        if (!alpn.isEmpty() && stream->alpn.isEmpty()) stream->alpn = alpn;
+        if (!caText.isEmpty() && stream->certificate.isEmpty()) stream->certificate = caText;
+        if (allowInsecure && !stream->allow_insecure) stream->allow_insecure = allowInsecure;
+        if (disableSni && !stream->disable_sni) stream->disable_sni = disableSni;
+
+        // Force TLS to be enabled for QUIC-based protocols
+        stream->security = "tls";
 
         QJsonObject outbound{
             {"server", serverAddress},
             {"server_port", serverPort},
-            {"tls", coreTlsObj},
         };
 
         if (proxy_type == proxy_Hysteria2) {
@@ -219,6 +256,18 @@ namespace NekoGui_fmt {
             }
             outbound["zero_rtt_handshake"] = zeroRttHandshake;
             if (!heartbeat.trimmed().isEmpty()) outbound["heartbeat"] = heartbeat;
+        }
+
+        // Build TLS configuration using stream settings (supports ECH, UTLS, Reality, etc.)
+        stream->BuildStreamSettingsSingBox(&outbound);
+
+        // Override ALPN for Hysteria2 if not explicitly set
+        if (proxy_type == proxy_Hysteria2) {
+            auto tls = outbound["tls"].toObject();
+            if (!tls.contains("alpn") || tls["alpn"].toArray().isEmpty()) {
+                tls["alpn"] = "h3";
+                outbound["tls"] = tls;
+            }
         }
 
         result.outbound = outbound;

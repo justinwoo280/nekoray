@@ -26,6 +26,20 @@ namespace NekoGui_fmt {
         QString reality_pbk = "";
         QString reality_sid = "";
         QString reality_spx = "";
+        // ech
+        bool ech_enabled = false;
+        QString ech_config = "";
+        QString ech_config_path = "";
+        QString ech_query_server_name = "";
+        QString ech_bootstrap_resolver = "dns-direct";
+        QString ech_tunnel_resolver = "dns-remote";
+        // tls advanced
+        bool disable_sni = false;
+        QString tls_min_version = "";
+        QString tls_max_version = "";
+        // dialer options
+        bool tcp_fast_open = false;
+        bool udp_fragment = false;
         // multiplex
         int multiplex_status = 0;
 
@@ -46,6 +60,17 @@ namespace NekoGui_fmt {
             _add(new configItem("pbk", &reality_pbk, itemType::string));
             _add(new configItem("sid", &reality_sid, itemType::string));
             _add(new configItem("spx", &reality_spx, itemType::string));
+            _add(new configItem("ech_en", &ech_enabled, itemType::boolean));
+            _add(new configItem("ech_cfg", &ech_config, itemType::string));
+            _add(new configItem("ech_cfg_path", &ech_config_path, itemType::string));
+            _add(new configItem("ech_query", &ech_query_server_name, itemType::string));
+            _add(new configItem("ech_boot", &ech_bootstrap_resolver, itemType::string));
+            _add(new configItem("ech_tun", &ech_tunnel_resolver, itemType::string));
+            _add(new configItem("disable_sni", &disable_sni, itemType::boolean));
+            _add(new configItem("tls_min_ver", &tls_min_version, itemType::string));
+            _add(new configItem("tls_max_ver", &tls_max_version, itemType::string));
+            _add(new configItem("tcp_fast_open", &tcp_fast_open, itemType::boolean));
+            _add(new configItem("udp_fragment", &udp_fragment, itemType::boolean));
             _add(new configItem("mux_s", &multiplex_status, itemType::integer));
         }
 

@@ -90,15 +90,34 @@ DialogEditProfile::DialogEditProfile(const QString &_type, int profileOrGroupId,
         if (txt == "tls") {
             ui->security_box->setVisible(true);
             ui->tls_camouflage_box->setVisible(true);
+            ui->tls_advanced_box->setVisible(true);
             ui->reality_spx->hide();
             ui->reality_spx_l->hide();
         } else {
             ui->security_box->setVisible(false);
             ui->tls_camouflage_box->setVisible(false);
+            ui->tls_advanced_box->setVisible(false);
         }
         ADJUST_SIZE
     });
     emit ui->security->currentTextChanged(ui->security->currentText());
+    
+    // ECH enabled changed - show/hide ECH config fields
+    connect(ui->ech_enabled, &QCheckBox::stateChanged, this, [=](int state) {
+        bool enabled = (state == Qt::Checked);
+        ui->ech_config->setVisible(enabled);
+        ui->ech_config_l->setVisible(enabled);
+        ui->ech_config_path->setVisible(enabled);
+        ui->ech_config_path_l->setVisible(enabled);
+        ui->ech_query_server_name->setVisible(enabled);
+        ui->ech_query_server_name_l->setVisible(enabled);
+        ui->ech_bootstrap_resolver->setVisible(enabled);
+        ui->ech_bootstrap_resolver_l->setVisible(enabled);
+        ui->ech_tunnel_resolver->setVisible(enabled);
+        ui->ech_tunnel_resolver_l->setVisible(enabled);
+        ADJUST_SIZE
+    });
+    emit ui->ech_enabled->stateChanged(ui->ech_enabled->checkState());
 
     // 确定模式和 ent
     newEnt = _type != "";
@@ -227,6 +246,19 @@ void DialogEditProfile::typeSelected(const QString &newType) {
         ui->reality_sid->setText(stream->reality_sid);
         ui->multiplex->setCurrentIndex(stream->multiplex_status);
         CACHE.certificate = stream->certificate;
+        // ECH and TLS advanced options
+        ui->ech_enabled->setChecked(stream->ech_enabled);
+        ui->ech_config->setText(stream->ech_config);
+        ui->ech_config_path->setText(stream->ech_config_path);
+        ui->ech_query_server_name->setText(stream->ech_query_server_name);
+        ui->ech_bootstrap_resolver->setCurrentText(stream->ech_bootstrap_resolver);
+        ui->ech_tunnel_resolver->setCurrentText(stream->ech_tunnel_resolver);
+        ui->disable_sni->setChecked(stream->disable_sni);
+        ui->tls_min_version->setCurrentText(stream->tls_min_version);
+        ui->tls_max_version->setCurrentText(stream->tls_max_version);
+        // Dialer options
+        ui->tcp_fast_open->setChecked(stream->tcp_fast_open);
+        ui->udp_fragment->setChecked(stream->udp_fragment);
     } else {
         ui->right_all_w->setVisible(false);
     }
@@ -358,6 +390,19 @@ bool DialogEditProfile::onEnd() {
         stream->reality_sid = ui->reality_sid->text();
         stream->multiplex_status = ui->multiplex->currentIndex();
         stream->certificate = CACHE.certificate;
+        // ECH and TLS advanced options
+        stream->ech_enabled = ui->ech_enabled->isChecked();
+        stream->ech_config = ui->ech_config->text();
+        stream->ech_config_path = ui->ech_config_path->text();
+        stream->ech_query_server_name = ui->ech_query_server_name->text();
+        stream->ech_bootstrap_resolver = ui->ech_bootstrap_resolver->currentText();
+        stream->ech_tunnel_resolver = ui->ech_tunnel_resolver->currentText();
+        stream->disable_sni = ui->disable_sni->isChecked();
+        stream->tls_min_version = ui->tls_min_version->currentText();
+        stream->tls_max_version = ui->tls_max_version->currentText();
+        // Dialer options
+        stream->tcp_fast_open = ui->tcp_fast_open->isChecked();
+        stream->udp_fragment = ui->udp_fragment->isChecked();
     }
 
     // cached custom

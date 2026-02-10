@@ -630,6 +630,241 @@ security (QUIC)</string>
         </layout>
        </widget>
       </item>
+      <item>
+       <widget class="QGroupBox" name="tls_advanced_box">
+        <property name="title">
+         <string>TLS Advanced Settings</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="ech_enabled">
+           <property name="toolTip">
+            <string>Enable Encrypted Client Hello (ECH) for enhanced privacy</string>
+           </property>
+           <property name="text">
+            <string>Enable ECH</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="ech_config_l">
+           <property name="toolTip">
+            <string>Static ECH configuration (base64 encoded)</string>
+           </property>
+           <property name="text">
+            <string>ECH Config</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="MyLineEdit" name="ech_config"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="ech_config_path_l">
+           <property name="toolTip">
+            <string>Path to ECH configuration file</string>
+           </property>
+           <property name="text">
+            <string>ECH Config Path</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="MyLineEdit" name="ech_config_path"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="ech_query_server_name_l">
+           <property name="toolTip">
+            <string>Server name for dynamic ECH query (leave empty to use SNI)</string>
+           </property>
+           <property name="text">
+            <string>ECH Query Server</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="MyLineEdit" name="ech_query_server_name"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="ech_bootstrap_resolver_l">
+           <property name="toolTip">
+            <string>DNS resolver for initial ECH query (default: dns-direct)</string>
+           </property>
+           <property name="text">
+            <string>ECH Bootstrap DNS</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QComboBox" name="ech_bootstrap_resolver">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+           <item>
+            <property name="text">
+             <string notr="true">dns-direct</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">dns-remote</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="ech_tunnel_resolver_l">
+           <property name="toolTip">
+            <string>DNS resolver for ECH TTL refresh (default: dns-remote)</string>
+           </property>
+           <property name="text">
+            <string>ECH Tunnel DNS</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QComboBox" name="ech_tunnel_resolver">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+           <item>
+            <property name="text">
+             <string notr="true">dns-remote</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">dns-direct</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QCheckBox" name="disable_sni">
+           <property name="toolTip">
+            <string>Disable SNI in TLS handshake</string>
+           </property>
+           <property name="text">
+            <string>Disable SNI</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="tls_min_version_l">
+           <property name="toolTip">
+            <string>Minimum TLS version</string>
+           </property>
+           <property name="text">
+            <string>TLS Min Version</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QComboBox" name="tls_min_version">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+           <item>
+            <property name="text">
+             <string notr="true"></string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">1.0</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">1.1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">1.2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">1.3</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="8" column="0">
+          <widget class="QLabel" name="tls_max_version_l">
+           <property name="toolTip">
+            <string>Maximum TLS version</string>
+           </property>
+           <property name="text">
+            <string>TLS Max Version</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="1">
+          <widget class="QComboBox" name="tls_max_version">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+           <item>
+            <property name="text">
+             <string notr="true"></string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">1.0</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">1.1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">1.2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string notr="true">1.3</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QGroupBox" name="dialer_options_box">
+        <property name="title">
+         <string>Dialer Options</string>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QCheckBox" name="tcp_fast_open">
+           <property name="toolTip">
+            <string>Enable TCP Fast Open to reduce latency</string>
+           </property>
+           <property name="text">
+            <string>TCP Fast Open</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="udp_fragment">
+           <property name="toolTip">
+            <string>Enable UDP fragmentation for compatibility</string>
+           </property>
+           <property name="text">
+            <string>UDP Fragment</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -666,6 +901,17 @@ security (QUIC)</string>
   <tabstop>utlsFingerprint</tabstop>
   <tabstop>reality_pbk</tabstop>
   <tabstop>reality_sid</tabstop>
+  <tabstop>ech_enabled</tabstop>
+  <tabstop>ech_config</tabstop>
+  <tabstop>ech_config_path</tabstop>
+  <tabstop>ech_query_server_name</tabstop>
+  <tabstop>ech_bootstrap_resolver</tabstop>
+  <tabstop>ech_tunnel_resolver</tabstop>
+  <tabstop>disable_sni</tabstop>
+  <tabstop>tls_min_version</tabstop>
+  <tabstop>tls_max_version</tabstop>
+  <tabstop>tcp_fast_open</tabstop>
+  <tabstop>udp_fragment</tabstop>
  </tabstops>
  <resources/>
  <connections>

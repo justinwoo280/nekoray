@@ -449,6 +449,102 @@
         <source>Confirm</source>
         <translation>Подтвердить</translation>
     </message>
+    <message>
+        <source>TLS Advanced Settings</source>
+        <translation>Расширенные настройки TLS</translation>
+    </message>
+    <message>
+        <source>Enable Encrypted Client Hello (ECH) for enhanced privacy</source>
+        <translation>Включить Encrypted Client Hello (ECH) для повышенной конфиденциальности</translation>
+    </message>
+    <message>
+        <source>Enable ECH</source>
+        <translation>Включить ECH</translation>
+    </message>
+    <message>
+        <source>Static ECH configuration (base64 encoded)</source>
+        <translation>Статическая конфигурация ECH (кодировка base64)</translation>
+    </message>
+    <message>
+        <source>ECH Config</source>
+        <translation>Конфигурация ECH</translation>
+    </message>
+    <message>
+        <source>Path to ECH configuration file</source>
+        <translation>Путь к файлу конфигурации ECH</translation>
+    </message>
+    <message>
+        <source>ECH Config Path</source>
+        <translation>Путь к конфигурации ECH</translation>
+    </message>
+    <message>
+        <source>Server name for dynamic ECH query (leave empty to use SNI)</source>
+        <translation>Имя сервера для динамического запроса ECH (оставьте пустым для использования SNI)</translation>
+    </message>
+    <message>
+        <source>ECH Query Server</source>
+        <translation>Сервер запросов ECH</translation>
+    </message>
+    <message>
+        <source>DNS resolver for initial ECH query (default: dns-direct)</source>
+        <translation>DNS-резолвер для начального запроса ECH (по умолчанию: dns-direct)</translation>
+    </message>
+    <message>
+        <source>ECH Bootstrap DNS</source>
+        <translation>Начальный DNS для ECH</translation>
+    </message>
+    <message>
+        <source>DNS resolver for ECH TTL refresh (default: dns-remote)</source>
+        <translation>DNS-резолвер для обновления TTL ECH (по умолчанию: dns-remote)</translation>
+    </message>
+    <message>
+        <source>ECH Tunnel DNS</source>
+        <translation>Туннельный DNS для ECH</translation>
+    </message>
+    <message>
+        <source>Disable SNI in TLS handshake</source>
+        <translation>Отключить SNI в рукопожатии TLS</translation>
+    </message>
+    <message>
+        <source>Disable SNI</source>
+        <translation>Отключить SNI</translation>
+    </message>
+    <message>
+        <source>Minimum TLS version</source>
+        <translation>Минимальная версия TLS</translation>
+    </message>
+    <message>
+        <source>TLS Min Version</source>
+        <translation>Мин. версия TLS</translation>
+    </message>
+    <message>
+        <source>Maximum TLS version</source>
+        <translation>Максимальная версия TLS</translation>
+    </message>
+    <message>
+        <source>TLS Max Version</source>
+        <translation>Макс. версия TLS</translation>
+    </message>
+    <message>
+        <source>Dialer Options</source>
+        <translation>Параметры набора</translation>
+    </message>
+    <message>
+        <source>Enable TCP Fast Open to reduce latency</source>
+        <translation>Включить TCP Fast Open для снижения задержки</translation>
+    </message>
+    <message>
+        <source>TCP Fast Open</source>
+        <translation>TCP Fast Open</translation>
+    </message>
+    <message>
+        <source>Enable UDP fragmentation for compatibility</source>
+        <translation>Включить фрагментацию UDP для совместимости</translation>
+    </message>
+    <message>
+        <source>UDP Fragment</source>
+        <translation>Фрагментация UDP</translation>
+    </message>
 </context>
 <context>
     <name>DialogHotkey</name>

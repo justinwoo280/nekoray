@@ -1,0 +1,264 @@
+name: Test Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_target:
+        description: "Build target"
+        required: true
+        type: choice
+        default: "go-core-only"
+        options:
+          - go-core-only
+          - windows-full
+          - linux-full
+      sing_box_repo:
+        description: "sing-box repository (owner/repo)"
+        required: false
+        default: "justinwoo280/sing-box"
+        type: string
+      sing_box_ref:
+        description: "sing-box branch/tag"
+        required: false
+        default: "dev-next"
+        type: string
+
+jobs:
+  build-go:
+    name: Build Go Core
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cross_os: [windows, linux]
+        cross_arch: [amd64]
+        include:
+          - cross_os: public_res
+            cross_arch: public_res
+      fail-fast: false
+    steps:
+      - name: Checkout nekoray
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ^1.22
+
+      - name: Override sing-box source (if custom repo specified)
+        if: inputs.sing_box_repo != 'MatsuriDayo/sing-box'
+        run: |
+          # 修改 get_source.sh 使用自定义仓库
+          sed -i 's|https://github.com/MatsuriDayo/sing-box.git|https://github.com/${{ inputs.sing_box_repo }}.git|g' \
+            libs/get_source.sh
+          
+          # 修改 get_source_env.sh 使用指定的 ref
+          echo "export COMMIT_SING_BOX=\"${{ inputs.sing_box_ref }}\"" > libs/get_source_env_override.sh
+          sed -i '7i source libs/get_source_env_override.sh' libs/get_source.sh
+
+      - name: Get dependencies
+        if: matrix.cross_os != 'public_res'
+        run: |
+          ./libs/get_source.sh
+
+      - name: Merge NekoBox-specific packages from MatsuriDayo
+        if: matrix.cross_os != 'public_res' && inputs.sing_box_repo != 'MatsuriDayo/sing-box'
+        run: |
+          echo "🔄 Merging NekoBox-specific packages from MatsuriDayo/sing-box..."
+          
+          # Clone MatsuriDayo/sing-box to temporary directory (use commit hash from nekoray's get_source_env.sh)
+          cd ..
+          
+          # 读取 nekoray 期望的 MatsuriDayo commit
+          source nekoray/libs/get_source_env.sh
+          MATSURI_COMMIT="${COMMIT_SING_BOX:-06557f6cef23160668122a17a818b378b5a216b5}"
+          
+          git clone --no-checkout https://github.com/MatsuriDayo/sing-box.git matsuri-sing-box
+          cd matsuri-sing-box
+          git checkout "$MATSURI_COMMIT"
+          cd ..
+          
+          # Copy NekoBox-specific packages
+          if [ -d "matsuri-sing-box/boxapi" ]; then
+            echo "📦 Copying boxapi..."
+            cp -r matsuri-sing-box/boxapi sing-box/
+          fi
+          
+          if [ -d "matsuri-sing-box/nekoutils" ]; then
+            echo "📦 Copying nekoutils..."
+            cp -r matsuri-sing-box/nekoutils sing-box/
+          fi
+          
+          if [ -d "matsuri-sing-box/experimental/libbox/platform" ]; then
+            echo "📦 Copying experimental/libbox/platform..."
+            mkdir -p sing-box/experimental/libbox/platform
+            cp -r matsuri-sing-box/experimental/libbox/platform/* sing-box/experimental/libbox/platform/
+          fi
+          
+          # Clean up temporary clone
+          rm -rf matsuri-sing-box
+          
+          echo "✅ NekoBox packages merged successfully!"
+
+      - name: Build Go core
+        if: matrix.cross_os != 'public_res'
+        run: |
+          GOOS=${{ matrix.cross_os }} GOARCH=${{ matrix.cross_arch }} ./libs/build_go.sh
+
+      - name: Build public resources
+        if: matrix.cross_os == 'public_res'
+        run: |
+          ./libs/build_public_res.sh
+
+      - name: Tar files
+        run: tar czvf artifacts.tgz ./deployment
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NekoRay-${{ github.sha }}-Go-${{ matrix.cross_os }}-${{ matrix.cross_arch }}
+          path: artifacts.tgz
+          retention-days: 7
+
+      - name: Show build info
+        if: matrix.cross_os != 'public_res'
+        run: |
+          echo "✅ Go core built successfully!"
+          find deployment -type f -name "nekobox_core*" -o -name "launcher*" -o -name "updater*" | xargs ls -lh
+
+  build-cpp:
+    name: Build C++ GUI
+    runs-on: ${{ matrix.platform }}
+    if: inputs.build_target != 'go-core-only'
+    needs: build-go
+    strategy:
+      matrix:
+        include:
+          - platform: windows-2022
+            arch: x64
+            qt_version: "6.7"
+            build_target_match: "windows-full"
+          - platform: ubuntu-20.04
+            arch: x64
+            qt_version: "5.12"
+            build_target_match: "linux-full"
+      fail-fast: false
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Check if should build
+        id: should_build
+        run: |
+          if [ "${{ inputs.build_target }}" == "${{ matrix.build_target_match }}" ]; then
+            echo "build=true" >> $GITHUB_OUTPUT
+          else
+            echo "build=false" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Checkout nekoray
+        if: steps.should_build.outputs.build == 'true'
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - name: Download Go artifacts
+        if: steps.should_build.outputs.build == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: NekoRay-${{ github.sha }}-Go-*
+          path: download-artifact
+
+      - name: Extract Go artifacts
+        if: steps.should_build.outputs.build == 'true'
+        shell: bash
+        run: |
+          find download-artifact -name artifacts.tgz | xargs -n1 tar xvzf
+
+      - name: Install MSVC compiler
+        if: steps.should_build.outputs.build == 'true' && matrix.platform == 'windows-2022'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          toolset: 14.2
+          arch: ${{ matrix.arch }}
+
+      - name: Windows - Download Custom Qt SDK
+        if: steps.should_build.outputs.build == 'true' && matrix.platform == 'windows-2022'
+        shell: bash
+        env:
+          DL_QT_VER: ${{ matrix.qt_version }}
+        run: bash ./libs/download_qtsdk_win.sh
+
+      - name: Install ninja-build tool
+        if: steps.should_build.outputs.build == 'true'
+        uses: seanmiddleditch/gha-setup-ninja@v3
+
+      - name: Cache Dependencies
+        if: steps.should_build.outputs.build == 'true'
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: libs/deps
+          key: DepsCache-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('libs/build_deps_*.sh') }}-Qt${{ matrix.qt_version }}
+
+      - name: Build Dependencies (Windows)
+        if: steps.should_build.outputs.build == 'true' && steps.cache-deps.outputs.cache-hit != 'true' && matrix.platform == 'windows-2022'
+        shell: bash
+        run: ./libs/build_deps_all.sh
+
+      - name: Build Dependencies (Linux Docker)
+        if: steps.should_build.outputs.build == 'true' && steps.cache-deps.outputs.cache-hit != 'true' && matrix.platform == 'ubuntu-20.04'
+        shell: bash
+        run: |
+          docker run --rm \
+            -v $PWD:/nekoray \
+            -w /nekoray \
+            ghcr.io/matsuridayo/debian10-qt5:20230131 \
+            bash -c "./libs/build_deps_all.sh"
+
+      - name: Windows - Generate MakeFile and Build
+        if: steps.should_build.outputs.build == 'true' && matrix.platform == 'windows-2022'
+        shell: bash
+        env:
+          DL_QT_VER: ${{ matrix.qt_version }}
+          CC: cl.exe
+          CXX: cl.exe
+        run: |
+          source libs/env_qtsdk.sh $PWD/qtsdk/Qt
+          mkdir build
+          cd build
+          cmake -GNinja -DQT_VERSION_MAJOR=6 -DCMAKE_BUILD_TYPE=Release ..
+          ninja -j2
+          cd ..
+          ./libs/deploy_windows64.sh
+
+      - name: Linux - Generate MakeFile and Build
+        if: steps.should_build.outputs.build == 'true' && matrix.platform == 'ubuntu-20.04'
+        shell: bash
+        run: |
+          docker run --rm \
+            -v $PWD:/nekoray \
+            -w /nekoray \
+            ghcr.io/matsuridayo/debian10-qt5:20230131 \
+            bash -c "mkdir build && pushd build && cmake -GNinja -DCMAKE_BUILD_TYPE=Release .. && ninja && popd && ./libs/deploy_linux64.sh"
+
+      - name: Tar files
+        if: steps.should_build.outputs.build == 'true'
+        shell: bash
+        run: tar czvf artifacts.tgz ./deployment
+
+      - name: Upload Artifact
+        if: steps.should_build.outputs.build == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NekoRay-${{ github.sha }}-Full-${{ matrix.platform }}-${{ matrix.arch }}-Qt${{ matrix.qt_version }}
+          path: artifacts.tgz
+          retention-days: 7
+
+      - name: Show build summary
+        if: steps.should_build.outputs.build == 'true'
+        shell: bash
+        run: |
+          echo "✅ Full build completed!"
+          echo ""
+          echo "📦 Deployment files:"
+          find deployment -type f | head -20
