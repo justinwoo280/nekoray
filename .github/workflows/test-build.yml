@@ -112,6 +112,28 @@ jobs:
           
           echo "✅ NekoBox packages merged successfully!"
 
+      - name: Update all Go module dependencies
+        if: matrix.cross_os != 'public_res'
+        run: |
+          echo "🔧 Tidying all Go modules..."
+          
+          # Tidy grpc_server
+          cd go/grpc_server
+          go mod tidy
+          cd ../..
+          
+          # Tidy updater
+          cd go/cmd/updater
+          go mod tidy
+          cd ../../..
+          
+          # Tidy nekobox_core (must be last as it depends on others)
+          cd go/cmd/nekobox_core
+          go mod tidy
+          cd ../../..
+          
+          echo "✅ All Go modules updated!"
+
       - name: Build Go core
         if: matrix.cross_os != 'public_res'
         run: |
