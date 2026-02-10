@@ -60,6 +60,13 @@ jobs:
         run: |
           ./libs/get_source.sh
 
+      - name: Update sing-box dependencies
+        if: matrix.cross_os != 'public_res'
+        run: |
+          cd ../sing-box
+          go mod tidy
+          cd ../nekoray
+
       - name: Merge NekoBox-specific packages from MatsuriDayo
         if: matrix.cross_os != 'public_res' && inputs.sing_box_repo != 'MatsuriDayo/sing-box'
         run: |
@@ -94,14 +101,14 @@ jobs:
             cp -r matsuri-sing-box/experimental/libbox/platform/* sing-box/experimental/libbox/platform/
           fi
           
-          # Update go.mod after merging packages
-          echo "🔧 Updating go.mod..."
-          cd sing-box
-          go mod tidy
-          cd ..
-          
           # Clean up temporary clone
           rm -rf matsuri-sing-box
+          
+          # Update go.mod after merging packages
+          echo "🔧 Updating sing-box go.mod after merge..."
+          cd sing-box
+          go mod tidy
+          cd ../nekoray
           
           echo "✅ NekoBox packages merged successfully!"
 
