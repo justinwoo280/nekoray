@@ -42,7 +42,8 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.22
+          go-version: '>=1.24.7'
+          check-latest: true
 
       - name: Override sing-box source (if custom repo specified)
         if: inputs.sing_box_repo != 'MatsuriDayo/sing-box'
