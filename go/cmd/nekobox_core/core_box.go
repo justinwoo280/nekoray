@@ -9,14 +9,13 @@ import (
 	"github.com/matsuridayo/libneko/neko_log"
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/boxapi"
-	boxmain "github.com/sagernet/sing-box/cmd/sing-box"
 )
 
 var instance *box.Box
 var instance_cancel context.CancelFunc
 
 func setupCore() {
-	boxmain.SetDisableColor(true)
+	SetDisableColor(true)
 	//
 	neko_log.SetupLog(50*1024, "./neko.log")
 	//

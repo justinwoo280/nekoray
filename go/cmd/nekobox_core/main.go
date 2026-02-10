@@ -8,7 +8,6 @@ import (
 	"grpc_server"
 
 	"github.com/matsuridayo/libneko/neko_common"
-	boxmain "github.com/sagernet/sing-box/cmd/sing-box"
 	"github.com/sagernet/sing-box/constant"
 )
 
@@ -24,5 +23,5 @@ func main() {
 	}
 
 	// sing-box
-	boxmain.Main()
+	Main()
 }

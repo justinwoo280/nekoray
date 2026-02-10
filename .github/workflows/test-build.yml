@@ -102,11 +102,6 @@ jobs:
             cp -r matsuri-sing-box/experimental/libbox/platform/* sing-box/experimental/libbox/platform/
           fi
           
-          if [ -d "matsuri-sing-box/cmd/sing-box" ]; then
-            echo "📦 Copying cmd/sing-box (MatsuriDayo modifications)..."
-            cp -r matsuri-sing-box/cmd/sing-box/* sing-box/cmd/sing-box/
-          fi
-          
           # Clean up temporary clone
           rm -rf matsuri-sing-box
           

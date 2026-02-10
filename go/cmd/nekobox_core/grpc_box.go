@@ -13,7 +13,6 @@ import (
 	"github.com/matsuridayo/libneko/speedtest"
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/boxapi"
-	boxmain "github.com/sagernet/sing-box/cmd/sing-box"
 
 	"log"
 
@@ -44,7 +43,7 @@ func (s *server) Start(ctx context.Context, in *gen.LoadConfigReq) (out *gen.Err
 		return
 	}
 
-	instance, instance_cancel, err = boxmain.Create([]byte(in.CoreConfig))
+	instance, instance_cancel, err = Create([]byte(in.CoreConfig))
 
 	if instance != nil {
 		// Logger
