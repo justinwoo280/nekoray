@@ -94,6 +94,12 @@ jobs:
             cp -r matsuri-sing-box/experimental/libbox/platform/* sing-box/experimental/libbox/platform/
           fi
           
+          # Update go.mod after merging packages
+          echo "🔧 Updating go.mod..."
+          cd sing-box
+          go mod tidy
+          cd ..
+          
           # Clean up temporary clone
           rm -rf matsuri-sing-box
           
