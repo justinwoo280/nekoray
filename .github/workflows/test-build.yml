@@ -85,7 +85,7 @@ jobs:
           git checkout "$MATSURI_COMMIT"
           cd ..
           
-          # Copy NekoBox-specific packages
+          # Copy NekoBox-specific packages and modifications
           if [ -d "matsuri-sing-box/boxapi" ]; then
             echo "📦 Copying boxapi..."
             cp -r matsuri-sing-box/boxapi sing-box/
@@ -100,6 +100,11 @@ jobs:
             echo "📦 Copying experimental/libbox/platform..."
             mkdir -p sing-box/experimental/libbox/platform
             cp -r matsuri-sing-box/experimental/libbox/platform/* sing-box/experimental/libbox/platform/
+          fi
+          
+          if [ -d "matsuri-sing-box/cmd/sing-box" ]; then
+            echo "📦 Copying cmd/sing-box (MatsuriDayo modifications)..."
+            cp -r matsuri-sing-box/cmd/sing-box/* sing-box/cmd/sing-box/
           fi
           
           # Clean up temporary clone
