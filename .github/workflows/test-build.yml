@@ -111,6 +111,10 @@ jobs:
           go mod tidy
           cd ../nekoray
           
+          # Disable sing-quic replace to use sing-box's version
+          echo "🔧 Disabling sing-quic local replace in nekobox_core..."
+          sed -i 's|^replace github.com/sagernet/sing-quic =>|// replace github.com/sagernet/sing-quic =>|' go/cmd/nekobox_core/go.mod
+          
           echo "✅ NekoBox packages merged successfully!"
 
       - name: Update all Go module dependencies
