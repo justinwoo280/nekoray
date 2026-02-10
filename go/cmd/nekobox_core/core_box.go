@@ -8,7 +8,6 @@ import (
 	"github.com/matsuridayo/libneko/neko_common"
 	"github.com/matsuridayo/libneko/neko_log"
 	box "github.com/sagernet/sing-box"
-	"github.com/sagernet/sing-box/boxapi"
 )
 
 var instance *box.Box
@@ -24,26 +23,26 @@ func setupCore() {
 	}
 	neko_common.DialContext = func(ctx context.Context, specifiedInstance interface{}, network, addr string) (net.Conn, error) {
 		if i, ok := specifiedInstance.(*box.Box); ok {
-			return boxapi.DialContext(ctx, i, network, addr)
+			return DialContext(ctx, i, network, addr)
 		}
 		if instance != nil {
-			return boxapi.DialContext(ctx, instance, network, addr)
+			return DialContext(ctx, instance, network, addr)
 		}
 		return neko_common.DialContextSystem(ctx, network, addr)
 	}
 	neko_common.DialUDP = func(ctx context.Context, specifiedInstance interface{}) (net.PacketConn, error) {
 		if i, ok := specifiedInstance.(*box.Box); ok {
-			return boxapi.DialUDP(ctx, i)
+			return DialUDP(ctx, i)
 		}
 		if instance != nil {
-			return boxapi.DialUDP(ctx, instance)
+			return DialUDP(ctx, instance)
 		}
 		return neko_common.DialUDPSystem(ctx)
 	}
 	neko_common.CreateProxyHttpClient = func(specifiedInstance interface{}) *http.Client {
 		if i, ok := specifiedInstance.(*box.Box); ok {
-			return boxapi.CreateProxyHttpClient(i)
+			return CreateProxyHttpClient(i)
 		}
-		return boxapi.CreateProxyHttpClient(instance)
+		return CreateProxyHttpClient(instance)
 	}
 }

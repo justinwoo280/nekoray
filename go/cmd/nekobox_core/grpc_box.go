@@ -12,11 +12,8 @@ import (
 	"github.com/matsuridayo/libneko/neko_log"
 	"github.com/matsuridayo/libneko/speedtest"
 	box "github.com/sagernet/sing-box"
-	"github.com/sagernet/sing-box/boxapi"
 
 	"log"
-
-	"github.com/sagernet/sing-box/option"
 )
 
 type server struct {
@@ -48,13 +45,8 @@ func (s *server) Start(ctx context.Context, in *gen.LoadConfigReq) (out *gen.Err
 	if instance != nil {
 		// Logger
 		instance.SetLogWritter(neko_log.LogWriter)
-		// V2ray Service
-		if in.StatsOutbounds != nil {
-			instance.Router().SetV2RayServer(boxapi.NewSbV2rayServer(option.V2RayStatsServiceOptions{
-				Enabled:   true,
-				Outbounds: in.StatsOutbounds,
-			}))
-		}
+		// Note: V2Ray stats service is not available in standard sing-box
+		// Traffic statistics functionality is disabled when using custom sing-box
 	}
 
 	return
@@ -113,7 +105,7 @@ func (s *server) Test(ctx context.Context, in *gen.TestReq) (out *gen.TestResp, 
 			}
 		}
 		// Latency
-		out.Ms, err = speedtest.UrlTest(boxapi.CreateProxyHttpClient(i), in.Url, in.Timeout, speedtest.UrlTestStandard_RTT)
+		out.Ms, err = speedtest.UrlTest(CreateProxyHttpClient(i), in.Url, in.Timeout, speedtest.UrlTestStandard_RTT)
 	} else if in.Mode == gen.TestMode_TcpPing {
 		out.Ms, err = speedtest.TcpPing(in.Address, in.Timeout)
 	} else if in.Mode == gen.TestMode_FullTest {
@@ -134,11 +126,8 @@ func (s *server) Test(ctx context.Context, in *gen.TestReq) (out *gen.TestResp, 
 func (s *server) QueryStats(ctx context.Context, in *gen.QueryStatsReq) (out *gen.QueryStatsResp, _ error) {
 	out = &gen.QueryStatsResp{}
 
-	if instance != nil {
-		if ss, ok := instance.Router().V2RayServer().(*boxapi.SbV2rayServer); ok {
-			out.Traffic = ss.QueryStats(fmt.Sprintf("outbound>>>%s>>>traffic>>>%s", in.Tag, in.Direct))
-		}
-	}
+	// Note: V2Ray stats service is not available in standard sing-box
+	// Traffic statistics functionality is disabled when using custom sing-box
 
 	return
 }

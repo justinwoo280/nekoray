@@ -86,10 +86,11 @@ jobs:
           cd ..
           
           # Copy NekoBox-specific packages and modifications
-          if [ -d "matsuri-sing-box/boxapi" ]; then
-            echo "📦 Copying boxapi..."
-            cp -r matsuri-sing-box/boxapi sing-box/
-          fi
+          # Note: boxapi is skipped as it's incompatible with modern sing-box
+          # if [ -d "matsuri-sing-box/boxapi" ]; then
+          #   echo "📦 Copying boxapi..."
+          #   cp -r matsuri-sing-box/boxapi sing-box/
+          # fi
           
           if [ -d "matsuri-sing-box/nekoutils" ]; then
             echo "📦 Copying nekoutils..."
