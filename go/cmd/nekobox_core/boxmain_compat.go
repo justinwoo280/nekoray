@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,7 +30,7 @@ func SetDisableColor(dc bool) {
 // Create creates a new sing-box instance from JSON configuration
 func Create(nekoConfigContent []byte) (*box.Box, context.CancelFunc, error) {
 	var options option.Options
-	err := options.UnmarshalJSON(nekoConfigContent)
+	err := json.Unmarshal(nekoConfigContent, &options)
 	if err != nil {
 		return nil, nil, err
 	}

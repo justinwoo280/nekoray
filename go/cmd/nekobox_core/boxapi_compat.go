@@ -7,10 +7,7 @@ import (
 	"net/http"
 
 	box "github.com/sagernet/sing-box"
-	"github.com/sagernet/sing-box/adapter"
-	"github.com/sagernet/sing/common/bufio"
 	M "github.com/sagernet/sing/common/metadata"
-	N "github.com/sagernet/sing/common/network"
 )
 
 // Compatibility layer for boxapi functions to work with standard sing-box
@@ -24,14 +21,8 @@ func DialContext(ctx context.Context, instance *box.Box, network, address string
 		return nil, ErrNoOutbound
 	}
 	
-	destination, err := M.ParseSocksaddr(address)
-	if err != nil {
-		return nil, err
-	}
-	
-	return outbound.NewConnection(ctx, net.Conn(nil), adapter.InboundContext{
-		Destination: destination,
-	})
+	destination := M.ParseSocksaddr(address)
+	return outbound.DialContext(ctx, network, destination)
 }
 
 // DialUDP dials a UDP connection through the sing-box instance  
@@ -41,12 +32,8 @@ func DialUDP(ctx context.Context, instance *box.Box) (net.PacketConn, error) {
 		return nil, ErrNoOutbound
 	}
 	
-	conn, err := outbound.NewPacketConnection(ctx, nil, adapter.InboundContext{})
-	if err != nil {
-		return nil, err
-	}
-	
-	return bufio.NewNATPacketConn(bufio.NewPacketConn(conn), M.Socksaddr{}, M.Socksaddr{}), nil
+	// Use ListenPacket to create a packet connection
+	return outbound.ListenPacket(ctx, M.Socksaddr{})
 }
 
 // CreateProxyHttpClient creates an HTTP client that routes through the sing-box instance

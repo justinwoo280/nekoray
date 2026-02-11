@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"grpc_server"
 	"grpc_server/gen"
@@ -43,10 +42,8 @@ func (s *server) Start(ctx context.Context, in *gen.LoadConfigReq) (out *gen.Err
 	instance, instance_cancel, err = Create([]byte(in.CoreConfig))
 
 	if instance != nil {
-		// Logger
-		instance.SetLogWritter(neko_log.LogWriter)
-		// Note: V2Ray stats service is not available in standard sing-box
-		// Traffic statistics functionality is disabled when using custom sing-box
+		// Note: Custom log writer and V2Ray stats service are not available in standard sing-box
+		// These features are disabled when using custom sing-box
 	}
 
 	return
