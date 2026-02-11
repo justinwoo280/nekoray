@@ -8,7 +8,6 @@ import (
 	"grpc_server/gen"
 
 	"github.com/matsuridayo/libneko/neko_common"
-	"github.com/matsuridayo/libneko/neko_log"
 	"github.com/matsuridayo/libneko/speedtest"
 	box "github.com/sagernet/sing-box"
 
