@@ -1,0 +1,260 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # 触发条件: 推送 v 开头的 tag (如 v1.0.0)
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag name (e.g., v1.0.0)"
+        required: true
+        type: string
+      sing_box_repo:
+        description: "sing-box repository (owner/repo)"
+        required: false
+        default: "justinwoo280/sing-box"
+        type: string
+      sing_box_ref:
+        description: "sing-box branch/tag"
+        required: false
+        default: "dev-next"
+        type: string
+
+jobs:
+  build-go:
+    name: Build Go Core
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cross_os: [windows]
+        cross_arch: [amd64]
+        include:
+          - cross_os: public_res
+            cross_arch: public_res
+      fail-fast: false
+    steps:
+      - name: Checkout nekoray
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.24.7'
+          check-latest: true
+
+      - name: Override sing-box source (if custom repo specified)
+        if: inputs.sing_box_repo != 'MatsuriDayo/sing-box'
+        run: |
+          sed -i 's|https://github.com/MatsuriDayo/sing-box.git|https://github.com/${{ inputs.sing_box_repo }}.git|g' \
+            libs/get_source.sh
+          
+          echo "export COMMIT_SING_BOX=\"${{ inputs.sing_box_ref }}\"" > libs/get_source_env_override.sh
+          sed -i '7i source libs/get_source_env_override.sh' libs/get_source.sh
+
+      - name: Get dependencies
+        if: matrix.cross_os != 'public_res'
+        run: |
+          ./libs/get_source.sh
+
+      - name: Update sing-box dependencies
+        if: matrix.cross_os != 'public_res'
+        run: |
+          cd ../sing-box
+          go mod tidy
+          cd ../nekoray
+
+      - name: Merge NekoBox-specific packages from MatsuriDayo
+        if: matrix.cross_os != 'public_res' && inputs.sing_box_repo != 'MatsuriDayo/sing-box'
+        run: |
+          echo "🔄 Merging NekoBox-specific packages from MatsuriDayo/sing-box..."
+          cd ..
+          source nekoray/libs/get_source_env.sh
+          MATSURI_COMMIT="${COMMIT_SING_BOX:-06557f6cef23160668122a17a818b378b5a216b5}"
+          
+          git clone --no-checkout https://github.com/MatsuriDayo/sing-box.git matsuri-sing-box
+          cd matsuri-sing-box
+          git checkout "$MATSURI_COMMIT"
+          cd ..
+          
+          if [ -d "matsuri-sing-box/nekoutils" ]; then
+            echo "📦 Copying nekoutils..."
+            cp -r matsuri-sing-box/nekoutils sing-box/
+          fi
+          
+          if [ -d "matsuri-sing-box/experimental/libbox/platform" ]; then
+            echo "📦 Copying experimental/libbox/platform..."
+            mkdir -p sing-box/experimental/libbox/platform
+            cp -r matsuri-sing-box/experimental/libbox/platform/* sing-box/experimental/libbox/platform/
+          fi
+          
+          rm -rf matsuri-sing-box
+          
+          cd sing-box
+          go mod tidy
+          cd ../nekoray
+          
+          sed -i 's|^replace github.com/sagernet/sing-quic =>|// replace github.com/sagernet/sing-quic =>|' go/cmd/nekobox_core/go.mod
+          
+          echo "✅ NekoBox packages merged successfully!"
+
+      - name: Update all Go module dependencies
+        if: matrix.cross_os != 'public_res'
+        run: |
+          cd go/grpc_server
+          go mod tidy
+          cd ../..
+          
+          cd go/cmd/updater
+          go mod tidy
+          cd ../../..
+          
+          cd go/cmd/nekobox_core
+          go mod tidy
+          cd ../../..
+
+      - name: Build Go core
+        if: matrix.cross_os != 'public_res'
+        run: |
+          GOOS=${{ matrix.cross_os }} GOARCH=${{ matrix.cross_arch }} ./libs/build_go.sh
+
+      - name: Build public resources
+        if: matrix.cross_os == 'public_res'
+        run: |
+          ./libs/build_public_res.sh
+
+      - name: Tar files
+        run: tar czvf artifacts.tgz ./deployment
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NekoRay-${{ github.sha }}-Go-${{ matrix.cross_os }}-${{ matrix.cross_arch }}
+          path: artifacts.tgz
+          retention-days: 7
+
+  build-windows:
+    name: Build Windows GUI
+    runs-on: windows-2022
+    needs: build-go
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Checkout nekoray
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - name: Download Go artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: NekoRay-${{ github.sha }}-Go-*
+          path: download-artifact
+
+      - name: Extract Go artifacts
+        shell: bash
+        run: |
+          find download-artifact -name artifacts.tgz | xargs -n1 tar xvzf
+
+      - name: Install MSVC compiler
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          toolset: 14.2
+          arch: x64
+
+      - name: Download Custom Qt SDK
+        shell: bash
+        env:
+          DL_QT_VER: "6.7"
+        run: bash ./libs/download_qtsdk_win.sh
+
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v3
+
+      - name: Cache Dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: libs/deps
+          key: DepsCache-windows-2022-x64-${{ hashFiles('libs/build_deps_*.sh') }}-Qt6.7
+
+      - name: Build Dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        shell: bash
+        run: ./libs/build_deps_all.sh
+
+      - name: Generate MakeFile and Build
+        shell: bash
+        env:
+          DL_QT_VER: "6.7"
+          CC: cl.exe
+          CXX: cl.exe
+        run: |
+          source libs/env_qtsdk.sh $PWD/qtsdk/Qt
+          mkdir build
+          cd build
+          cmake -GNinja -DQT_VERSION_MAJOR=6 -DCMAKE_BUILD_TYPE=Release ..
+          ninja -j2
+          cd ..
+          ./libs/deploy_windows64.sh
+
+      - name: Package Release
+        shell: bash
+        run: |
+          cd deployment/windows64
+          7z a -tzip ../../nekoray-windows-x64.zip ./*
+
+      - name: Upload Release Asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: nekoray-windows-x64
+          path: nekoray-windows-x64.zip
+          retention-days: 7
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-windows
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: nekoray-windows-x64
+
+      - name: Get tag name
+        id: get_tag
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "tag_name=${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag_name=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag_name }}
+          name: NekoRay ${{ steps.get_tag.outputs.tag_name }}
+          draft: false
+          prerelease: false
+          files: |
+            nekoray-windows-x64.zip
+          body: |
+            ## NekoRay ${{ steps.get_tag.outputs.tag_name }}
+            
+            ### Windows
+            - **nekoray-windows-x64.zip**: Windows 64-bit 完整版
+            
+            ### 更新内容
+            - 使用自定义 sing-box core (justinwoo280/sing-box)
+            - 完整 GUI 界面
+            
+            ### 安装说明
+            1. 下载 `nekoray-windows-x64.zip`
+            2. 解压到任意目录
+            3. 运行 `nekoray.exe`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
