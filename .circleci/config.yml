@@ -4,7 +4,7 @@ version: 2.1
 executors:
   go-builder:
     docker:
-      - image: cimg/go:1.23  # 轻量级官方镜像
+      - image: cimg/go:1.25  # 使用 Go 1.25 (满足 sing-box >= 1.24.7 要求)
     resource_class: large
     working_directory: ~/nekoray
 
