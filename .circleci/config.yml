@@ -43,6 +43,31 @@ jobs:
       # 恢复 Go modules 缓存
       - restore-go-cache
       
+      # 更新依赖（参照 test-build.yml）
+      - run:
+          name: Update sing-box dependencies
+          command: |
+            cd ../sing-box
+            go mod tidy
+      
+      - run:
+          name: Update all Go module dependencies
+          command: |
+            # Tidy grpc_server
+            cd go/grpc_server
+            go mod tidy
+            cd ../..
+            
+            # Tidy updater
+            cd go/cmd/updater
+            go mod tidy
+            cd ../../..
+            
+            # Tidy nekobox_core (must be last as it depends on others)
+            cd go/cmd/nekobox_core
+            go mod tidy
+            cd ../../..
+      
       # 构建（禁用 CGO 减少依赖）
       - run:
           name: Build nekobox_core
