@@ -166,101 +166,61 @@ jobs:
           echo "✅ Go core built successfully!"
           find deployment -type f -name "nekobox_core*" -o -name "launcher*" -o -name "updater*" | xargs ls -lh
 
-  build-cpp:
-    name: Build C++ GUI
-    runs-on: ${{ matrix.platform }}
-    if: inputs.build_target != 'go-core-only'
+  build-cpp-windows:
+    name: Build C++ GUI (Windows)
+    runs-on: windows-2022
+    if: inputs.build_target == 'windows-full'
     needs: build-go
-    strategy:
-      matrix:
-        include:
-          - platform: windows-2022
-            arch: x64
-            qt_version: "6.7"
-            build_target_match: "windows-full"
-          - platform: ubuntu-20.04
-            arch: x64
-            qt_version: "5.12"
-            build_target_match: "linux-full"
-      fail-fast: false
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     steps:
-      - name: Check if should build
-        id: should_build
-        run: |
-          if [ "${{ inputs.build_target }}" == "${{ matrix.build_target_match }}" ]; then
-            echo "build=true" >> $GITHUB_OUTPUT
-          else
-            echo "build=false" >> $GITHUB_OUTPUT
-          fi
-        shell: bash
-
       - name: Checkout nekoray
-        if: steps.should_build.outputs.build == 'true'
         uses: actions/checkout@v4
         with:
           submodules: "recursive"
 
       - name: Download Go artifacts
-        if: steps.should_build.outputs.build == 'true'
         uses: actions/download-artifact@v4
         with:
           pattern: NekoRay-${{ github.sha }}-Go-*
           path: download-artifact
 
       - name: Extract Go artifacts
-        if: steps.should_build.outputs.build == 'true'
         shell: bash
         run: |
           find download-artifact -name artifacts.tgz | xargs -n1 tar xvzf
 
       - name: Install MSVC compiler
-        if: steps.should_build.outputs.build == 'true' && matrix.platform == 'windows-2022'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           toolset: 14.2
-          arch: ${{ matrix.arch }}
+          arch: x64
 
       - name: Windows - Download Custom Qt SDK
-        if: steps.should_build.outputs.build == 'true' && matrix.platform == 'windows-2022'
         shell: bash
         env:
-          DL_QT_VER: ${{ matrix.qt_version }}
+          DL_QT_VER: "6.7"
         run: bash ./libs/download_qtsdk_win.sh
 
       - name: Install ninja-build tool
-        if: steps.should_build.outputs.build == 'true'
         uses: seanmiddleditch/gha-setup-ninja@v3
 
       - name: Cache Dependencies
-        if: steps.should_build.outputs.build == 'true'
         id: cache-deps
         uses: actions/cache@v4
         with:
           path: libs/deps
-          key: DepsCache-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('libs/build_deps_*.sh') }}-Qt${{ matrix.qt_version }}
+          key: DepsCache-windows-2022-x64-${{ hashFiles('libs/build_deps_*.sh') }}-Qt6.7
 
-      - name: Build Dependencies (Windows)
-        if: steps.should_build.outputs.build == 'true' && steps.cache-deps.outputs.cache-hit != 'true' && matrix.platform == 'windows-2022'
+      - name: Build Dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         shell: bash
         run: ./libs/build_deps_all.sh
 
-      - name: Build Dependencies (Linux Docker)
-        if: steps.should_build.outputs.build == 'true' && steps.cache-deps.outputs.cache-hit != 'true' && matrix.platform == 'ubuntu-20.04'
-        shell: bash
-        run: |
-          docker run --rm \
-            -v $PWD:/nekoray \
-            -w /nekoray \
-            ghcr.io/matsuridayo/debian10-qt5:20230131 \
-            bash -c "./libs/build_deps_all.sh"
-
-      - name: Windows - Generate MakeFile and Build
-        if: steps.should_build.outputs.build == 'true' && matrix.platform == 'windows-2022'
+      - name: Generate MakeFile and Build
         shell: bash
         env:
-          DL_QT_VER: ${{ matrix.qt_version }}
+          DL_QT_VER: "6.7"
           CC: cl.exe
           CXX: cl.exe
         run: |
@@ -272,8 +232,70 @@ jobs:
           cd ..
           ./libs/deploy_windows64.sh
 
-      - name: Linux - Generate MakeFile and Build
-        if: steps.should_build.outputs.build == 'true' && matrix.platform == 'ubuntu-20.04'
+      - name: Tar files
+        shell: bash
+        run: tar czvf artifacts.tgz ./deployment
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NekoRay-${{ github.sha }}-Full-windows-2022-x64-Qt6.7
+          path: artifacts.tgz
+          retention-days: 7
+
+      - name: Show build summary
+        shell: bash
+        run: |
+          echo "✅ Full build completed!"
+          echo ""
+          echo "📦 Deployment files:"
+          find deployment -type f | head -20
+
+  build-cpp-linux:
+    name: Build C++ GUI (Linux)
+    runs-on: ubuntu-20.04
+    if: inputs.build_target == 'linux-full'
+    needs: build-go
+    env:
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    steps:
+      - name: Checkout nekoray
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+
+      - name: Download Go artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: NekoRay-${{ github.sha }}-Go-*
+          path: download-artifact
+
+      - name: Extract Go artifacts
+        shell: bash
+        run: |
+          find download-artifact -name artifacts.tgz | xargs -n1 tar xvzf
+
+      - name: Install ninja-build tool
+        uses: seanmiddleditch/gha-setup-ninja@v3
+
+      - name: Cache Dependencies
+        id: cache-deps
+        uses: actions/cache@v4
+        with:
+          path: libs/deps
+          key: DepsCache-ubuntu-20.04-x64-${{ hashFiles('libs/build_deps_*.sh') }}-Qt5.12
+
+      - name: Build Dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          docker run --rm \
+            -v $PWD:/nekoray \
+            -w /nekoray \
+            ghcr.io/matsuridayo/debian10-qt5:20230131 \
+            bash -c "./libs/build_deps_all.sh"
+
+      - name: Generate MakeFile and Build
         shell: bash
         run: |
           docker run --rm \
@@ -283,20 +305,17 @@ jobs:
             bash -c "mkdir build && pushd build && cmake -GNinja -DCMAKE_BUILD_TYPE=Release .. && ninja && popd && ./libs/deploy_linux64.sh"
 
       - name: Tar files
-        if: steps.should_build.outputs.build == 'true'
         shell: bash
         run: tar czvf artifacts.tgz ./deployment
 
       - name: Upload Artifact
-        if: steps.should_build.outputs.build == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: NekoRay-${{ github.sha }}-Full-${{ matrix.platform }}-${{ matrix.arch }}-Qt${{ matrix.qt_version }}
+          name: NekoRay-${{ github.sha }}-Full-ubuntu-20.04-x64-Qt5.12
           path: artifacts.tgz
           retention-days: 7
 
       - name: Show build summary
-        if: steps.should_build.outputs.build == 'true'
         shell: bash
         run: |
           echo "✅ Full build completed!"
