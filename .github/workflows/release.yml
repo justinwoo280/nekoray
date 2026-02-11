@@ -155,6 +155,13 @@ jobs:
         shell: bash
         run: |
           find download-artifact -name artifacts.tgz | xargs -n1 tar xvzf
+          
+          # Backup Go core files (deploy_windows64.sh will rm -rf deployment/windows64)
+          echo "Backing up Go core files..."
+          mkdir -p go-core-backup
+          cp deployment/windows64/nekobox_core.exe go-core-backup/ || echo "Warning: nekobox_core.exe not found"
+          cp deployment/windows64/updater.exe go-core-backup/ || echo "Warning: updater.exe not found"
+          ls -lh go-core-backup/
 
       - name: Install MSVC compiler
         uses: ilammy/msvc-dev-cmd@v1
@@ -198,23 +205,14 @@ jobs:
           cd ..
           ./libs/deploy_windows64.sh
 
-      - name: Copy Go core files to deployment
+      - name: Restore Go core files
         shell: bash
         run: |
-          echo "Copying Go core files..."
-          ls -lh deployment/windows64/ || true
+          echo "Restoring Go core files from backup..."
+          cp go-core-backup/* deployment/windows64/
           
-          # Copy nekobox_core.exe and launcher.exe from Go artifacts
-          if [ -f deployment/windows64/nekobox_core.exe ]; then
-            echo "✅ nekobox_core.exe already in place"
-          else
-            echo "❌ nekobox_core.exe not found, checking deployment root..."
-            find deployment -name "nekobox_core*" -o -name "launcher*" -o -name "updater*"
-            
-            # Go artifacts should be in deployment/windows64 from tar extraction
-            # If not, this is an error
-            exit 1
-          fi
+          echo "✅ Final deployment contents:"
+          ls -lh deployment/windows64/
 
       - name: Package Release
         shell: bash
