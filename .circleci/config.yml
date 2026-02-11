@@ -1,0 +1,121 @@
+version: 2.1
+
+# 复用配置减少重复
+executors:
+  go-builder:
+    docker:
+      - image: cimg/go:1.23  # 轻量级官方镜像
+    resource_class: large
+    working_directory: ~/nekoray
+
+# 可复用命令
+commands:
+  restore-go-cache:
+    steps:
+      - restore_cache:
+          keys:
+            - go-mod-v1-{{ checksum "go/cmd/nekobox_core/go.mod" }}
+            - go-mod-v1-
+  
+  save-go-cache:
+    steps:
+      - save_cache:
+          key: go-mod-v1-{{ checksum "go/cmd/nekobox_core/go.mod" }}
+          paths:
+            - ~/go/pkg/mod
+
+jobs:
+  # 只构建 Go 核心（最常用，最省资源）
+  build-go-core:
+    executor: go-builder
+    steps:
+      - checkout
+      
+      # 浅克隆 sing-box（节省流量）
+      - run:
+          name: Get sing-box source (shallow)
+          command: |
+            cd ..
+            if [ ! -d "sing-box" ]; then
+              git clone --depth 1 --branch dev-next https://github.com/justinwoo280/sing-box.git
+            fi
+      
+      # 恢复 Go modules 缓存
+      - restore-go-cache
+      
+      # 构建（禁用 CGO 减少依赖）
+      - run:
+          name: Build nekobox_core
+          command: |
+            export CGO_ENABLED=0
+            cd go/cmd/nekobox_core
+            go build -v -trimpath -ldflags "-w -s" \
+              -tags "with_clash_api,with_gvisor,with_quic,with_wireguard,with_utls"
+      
+      # 保存缓存
+      - save-go-cache
+      
+      # 存储构建产物（workspace 比 artifact 更省）
+      - persist_to_workspace:
+          root: ~/nekoray
+          paths:
+            - go/cmd/nekobox_core/nekobox_core
+      
+      # 仅在需要时上传 artifact
+      - when:
+          condition:
+            equal: [ main, << pipeline.git.branch >> ]
+          steps:
+            - store_artifacts:
+                path: go/cmd/nekobox_core/nekobox_core
+                destination: nekobox_core
+
+  # 完整构建（仅手动触发或 release）
+  build-full-windows:
+    machine:
+      image: windows-server-2022-gui:current
+    resource_class: windows.large
+    steps:
+      - checkout
+      
+      # 从 workspace 恢复 Go 构建（避免重复）
+      - attach_workspace:
+          at: ~/nekoray
+      
+      - run:
+          name: Build GUI (cached dependencies)
+          shell: bash.exe
+          command: |
+            # 使用缓存的构建产物
+            echo "Full build - implement as needed"
+
+workflows:
+  # 默认工作流：仅构建 Go core（快速验证）
+  commit-build:
+    jobs:
+      - build-go-core:
+          filters:
+            branches:
+              ignore:
+                - /release\/.*/  # release 分支走完整构建
+  
+  # 完整构建：手动触发或 release tag
+  full-build:
+    jobs:
+      - build-go-core:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - main
+                - /release\/.*/
+      
+      - build-full-windows:
+          requires:
+            - build-go-core
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /release\/.*/
