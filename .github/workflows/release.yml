@@ -198,9 +198,29 @@ jobs:
           cd ..
           ./libs/deploy_windows64.sh
 
+      - name: Copy Go core files to deployment
+        shell: bash
+        run: |
+          echo "Copying Go core files..."
+          ls -lh deployment/windows64/ || true
+          
+          # Copy nekobox_core.exe and launcher.exe from Go artifacts
+          if [ -f deployment/windows64/nekobox_core.exe ]; then
+            echo "✅ nekobox_core.exe already in place"
+          else
+            echo "❌ nekobox_core.exe not found, checking deployment root..."
+            find deployment -name "nekobox_core*" -o -name "launcher*" -o -name "updater*"
+            
+            # Go artifacts should be in deployment/windows64 from tar extraction
+            # If not, this is an error
+            exit 1
+          fi
+
       - name: Package Release
         shell: bash
         run: |
+          echo "📦 Packaging files from deployment/windows64..."
+          ls -lh deployment/windows64/
           cd deployment/windows64
           7z a -tzip ../../nekoray-windows-x64.zip ./*
 
