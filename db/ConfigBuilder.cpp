@@ -472,29 +472,39 @@ namespace NekoGui {
             IP_USER_RULE
         }
 
+        // Collect rule_set tags for geoip/geosite
+        QSet<QString> neededRuleSets;
+
         // sing-box common rule object
         auto make_rule = [&](const QStringList &list, bool isIP = false) {
             QJsonObject rule;
             //
             QJsonArray ip_cidr;
-            QJsonArray geoip;
+            QJsonArray rule_set_refs;
             //
             QJsonArray domain_keyword;
             QJsonArray domain_subdomain;
             QJsonArray domain_regexp;
             QJsonArray domain_full;
-            QJsonArray geosite;
             for (auto item: list) {
                 if (isIP) {
                     if (item.startsWith("geoip:")) {
-                        geoip += item.replace("geoip:", "");
+                        // Convert geoip:cn to rule-set reference geoip-cn
+                        auto code = item.mid(6); // Remove "geoip:" prefix
+                        auto ruleSetTag = "geoip-" + code;
+                        rule_set_refs += ruleSetTag;
+                        neededRuleSets.insert(ruleSetTag);
                     } else {
                         ip_cidr += item;
                     }
                 } else {
                     // https://www.v2fly.org/config/dns.html#dnsobject
                     if (item.startsWith("geosite:")) {
-                        geosite += item.replace("geosite:", "");
+                        // Convert geosite:cn to rule-set reference geosite-cn
+                        auto code = item.mid(8); // Remove "geosite:" prefix
+                        auto ruleSetTag = "geosite-" + code;
+                        rule_set_refs += ruleSetTag;
+                        neededRuleSets.insert(ruleSetTag);
                     } else if (item.startsWith("full:")) {
                         domain_full += item.replace("full:", "").toLower();
                     } else if (item.startsWith("domain:")) {
@@ -509,18 +519,18 @@ namespace NekoGui {
                 }
             }
             if (isIP) {
-                if (ip_cidr.isEmpty() && geoip.isEmpty()) return rule;
-                rule["ip_cidr"] = ip_cidr;
-                rule["geoip"] = geoip;
+                if (ip_cidr.isEmpty() && rule_set_refs.isEmpty()) return rule;
+                if (!ip_cidr.isEmpty()) rule["ip_cidr"] = ip_cidr;
+                if (!rule_set_refs.isEmpty()) rule["rule_set"] = rule_set_refs;
             } else {
-                if (domain_keyword.isEmpty() && domain_subdomain.isEmpty() && domain_regexp.isEmpty() && domain_full.isEmpty() && geosite.isEmpty()) {
+                if (domain_keyword.isEmpty() && domain_subdomain.isEmpty() && domain_regexp.isEmpty() && domain_full.isEmpty() && rule_set_refs.isEmpty()) {
                     return rule;
                 }
-                rule["domain"] = domain_full;
-                rule["domain_suffix"] = domain_subdomain; // v2ray Subdomain => sing-box suffix
-                rule["domain_keyword"] = domain_keyword;
-                rule["domain_regex"] = domain_regexp;
-                rule["geosite"] = geosite;
+                if (!domain_full.isEmpty()) rule["domain"] = domain_full;
+                if (!domain_subdomain.isEmpty()) rule["domain_suffix"] = domain_subdomain; // v2ray Subdomain => sing-box suffix
+                if (!domain_keyword.isEmpty()) rule["domain_keyword"] = domain_keyword;
+                if (!domain_regexp.isEmpty()) rule["domain_regex"] = domain_regexp;
+                if (!rule_set_refs.isEmpty()) rule["rule_set"] = rule_set_refs;
             }
             return rule;
         };
@@ -693,36 +703,50 @@ namespace NekoGui {
             }
         }
 
-        // geopath
-        auto geoip = FindCoreAsset("geoip.db");
-        auto geosite = FindCoreAsset("geosite.db");
-        if (geoip.isEmpty()) status->result->error = +"geoip.db not found";
-        if (geosite.isEmpty()) status->result->error = +"geosite.db not found";
+        // Generate rule_set configurations for geoip/geosite
+        QJsonArray ruleSets;
+        for (const auto &ruleSetTag : neededRuleSets) {
+            QJsonObject ruleSet;
+            ruleSet["tag"] = ruleSetTag;
+            ruleSet["type"] = "remote";
+            ruleSet["format"] = "binary";
+            
+            // Determine URL based on tag prefix
+            if (ruleSetTag.startsWith("geoip-")) {
+                auto code = ruleSetTag.mid(6); // Remove "geoip-" prefix
+                ruleSet["url"] = "https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip-" + code + ".srs";
+            } else if (ruleSetTag.startsWith("geosite-")) {
+                auto code = ruleSetTag.mid(8); // Remove "geosite-" prefix
+                ruleSet["url"] = "https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite-" + code + ".srs";
+            }
+            
+            // Use proxy outbound for downloading rule-sets if not testing
+            if (!status->forTest) {
+                ruleSet["download_detour"] = tagProxy;
+            }
+            
+            ruleSets += ruleSet;
+        }
 
         // final add routing rule
         auto routingRules = QString2QJsonObject(dataStore->routing->custom)["rules"].toArray();
         if (status->forTest) routingRules = {};
         if (!status->forTest) QJSONARRAY_ADD(routingRules, QString2QJsonObject(dataStore->custom_route_global)["rules"].toArray())
         QJSONARRAY_ADD(routingRules, status->routingRules)
+        
         auto routeObj = QJsonObject{
             {"rules", routingRules},
             {"auto_detect_interface", dataStore->spmode_vpn}, // TODO force enable?
-            {
-                "geoip",
-                QJsonObject{
-                    {"path", geoip},
-                },
-            },
-            {
-                "geosite",
-                QJsonObject{
-                    {"path", geosite},
-                },
-            }};
+        };
+        
+        // Add rule_set array if any geoip/geosite rules are used
+        if (!ruleSets.isEmpty()) {
+            routeObj["rule_set"] = ruleSets;
+        }
+        
         if (!status->forTest) routeObj["final"] = dataStore->routing->def_outbound;
         if (status->forExport) {
-            routeObj.remove("geoip");
-            routeObj.remove("geosite");
+            routeObj.remove("rule_set"); // Remove remote rule-sets for export
             routeObj.remove("auto_detect_interface");
         }
         status->result->coreConfig.insert("route", routeObj);
