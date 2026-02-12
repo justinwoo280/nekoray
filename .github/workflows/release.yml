@@ -211,6 +211,18 @@ jobs:
           echo "Restoring Go core files from backup..."
           cp go-core-backup/* deployment/windows64/
           
+          echo "Copying public resources (geosite.db, geoip.db, etc.)..."
+          if [ -d "deployment/public_res" ]; then
+            cp deployment/public_res/* deployment/windows64/
+          else
+            echo "⚠️ Warning: public_res not found, downloading directly..."
+            mkdir -p deployment/public_res
+            curl -fLso deployment/windows64/geoip.dat "https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geoip.dat"
+            curl -fLso deployment/windows64/geosite.dat "https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat"
+            curl -fLso deployment/windows64/geoip.db "https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db"
+            curl -fLso deployment/windows64/geosite.db "https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db"
+          fi
+          
           echo "✅ Final deployment contents:"
           ls -lh deployment/windows64/
 
