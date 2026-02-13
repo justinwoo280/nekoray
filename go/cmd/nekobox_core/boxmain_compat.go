@@ -8,10 +8,10 @@ import (
 	"syscall"
 
 	box "github.com/sagernet/sing-box"
+	"github.com/sagernet/sing-box/include"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	E "github.com/sagernet/sing/common/exceptions"
-	"github.com/sagernet/sing/service"
 	"github.com/spf13/cobra"
 )
 
@@ -24,8 +24,8 @@ var (
 )
 
 func init() {
-	// Initialize context with default registry
-	nekoCtx = service.ContextWithDefaultRegistry(context.Background())
+	// Initialize context with all required registries
+	nekoCtx = include.Context(context.Background())
 }
 
 // SetDisableColor sets whether to disable colored log output
