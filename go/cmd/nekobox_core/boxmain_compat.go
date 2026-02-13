@@ -11,6 +11,7 @@ import (
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	E "github.com/sagernet/sing/common/exceptions"
+	"github.com/sagernet/sing/service"
 	"github.com/spf13/cobra"
 )
 
@@ -19,8 +20,13 @@ import (
 
 var (
 	disableColor bool
-	nekoCtx      = context.TODO()
+	nekoCtx      context.Context
 )
+
+func init() {
+	// Initialize context with default registry
+	nekoCtx = service.ContextWithDefaultRegistry(context.Background())
+}
 
 // SetDisableColor sets whether to disable colored log output
 func SetDisableColor(dc bool) {
